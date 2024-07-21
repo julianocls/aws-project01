@@ -5,29 +5,14 @@ plugins {
 	id 'com.palantir.docker' version '0.35.0'
 }
 
-group = "julianoclsantos"
+//TODO - esse valor deve ser o mesmo do seu Docker Hub ID
+group = 'julianoclsantos'
+
+//TODO - aqui é o lugar onde se configura a tag da imagem Docker a ser gerada
 version = '1.0.0'
 
-tasks.register('unpack', Copy) {
-	dependsOn bootJar
-	from(zipTree(tasks.bootJar.outputs.files.singleFile))
-	into("build/dependency")
-}
-
-//Já está preparado para gerar imagem no formato linux/amd64
-//A variável project.name deve ser configurada no arquivo settings.gradle
-docker {
-	name "${project.group}/${project.name}"
-	buildx true
-	platform 'linux/amd64'
-	copySpec.from(tasks.unpack.outputs).into('dependency')
-	buildArgs(['DEPENDENCY' : "dependency"])
-}
-
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
-	}
+	sourceCompatibility = '17'
 }
 
 repositories {
@@ -41,7 +26,20 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.register('unpack', Copy) {
+	dependsOn bootJar
+	from(zipTree(tasks.bootJar.outputs.files.singleFile))
+	into("build/dependency")
+}
+
+docker {
+	name "${project.group}/${project.name}"
+	buildx true
+	platform 'linux/amd64'
+	copySpec.from(tasks.unpack.outputs).into('dependency')
+	buildArgs(['DEPENDENCY' : "dependency"])
 }
 
 tasks.named('test') {
